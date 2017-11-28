@@ -1,0 +1,87 @@
+DATA SEGMENT
+
+MESS1   DB  0ah,0dh,"Input A number:$"
+MESS2   DB  0AH,0DH,"THE RESULT:$"
+ROOT 	DB  6,?,6 DUP(?)
+BUFFER  DB  6,?,6 DUP(?);10进制
+C10     DB  10
+HUICHE  DB  0AH,0DH,'$'
+x       DB  ?
+DATA ENDS
+CODE SEGMENT
+ASSUME CS:CODE,DS:DATA
+START:
+	MOV AX,DATA
+	MOV DS,AX
+	LEA DX,MESS1
+        CALL MYREAD
+
+	CALL SQUARE     ;结果在AL中
+	MOV  X,AL
+	CALL MYPUT
+	MOV AX,4C00H;20
+	INT 21H
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;输入,结果在AX中
+MYREAD  PROC  NEAR
+	MOV   AH,09H
+	INT   21H;提示信息
+	LEA   DX,BUFFER
+	MOV   AH,0AH
+	INT   21H
+	MOV   AX,0
+	MOV   CH,0
+	MOV   CL,BUFFER+1
+	LEA   BX,BUFFER+2
+R1:	MUL   C10
+	MOV   DL,[BX]
+	AND   DL,0FH
+	ADD   AL,DL
+	ADC   AH,0
+	INC   BX
+	LOOP  R1
+RET
+MYREAD  ENDP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;输出
+MYPUT	PROC  NEAR
+	LEA   DX,MESS2
+	MOV   AH,09H
+	INT   21H
+	LEA   DX,HUICHE
+	MOV   AH,09H
+	INT   21H
+	MOV   AL,X
+	MOV   CX,5
+L1:	mov   AH,0
+	DIV   C10
+	PUSH  AX
+	LOOP  L1
+	MOV   CX,5
+L2:	POP   DX
+	XCHG  DH,DL
+	OR    DL,30H
+	MOV   AH,2
+	INT   21H
+	LOOP  L2
+	
+
+RET
+MYPUT   ENDP
+;;;;;;;;;;;;;;;;;;;;;;;;求平方根		
+SQUARE  PROC  NEAR
+	PUSH  CX
+	PUSH  BX
+	MOV   BX,AX
+	MOV   AL,0
+	MOV   CX,1
+NEXT:
+	SUB   BX,CX
+	JL    DONE
+	ADD   CX,2
+	INC   AL
+	JMP   NEXT
+DONE:	POP   BX 
+ 	POP   CX
+ 	RET
+SQUARE  ENDP
+CODE 	ENDS
+	END START
